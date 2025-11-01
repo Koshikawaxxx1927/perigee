@@ -271,46 +271,6 @@ var (
 		Usage:   "Target file path for outputting a generated JWT secret to be used for JSON-RPC authentication",
 		Aliases: []string{"o"},
 	}
-	// For Virtual Coordinate System code /////////////
-	// NumberOfKフラグはVCS上のクラスターの数を示す
-	DisableBadPeer = &cli.BoolFlag{
-		Name:  "disable-bad-peer",
-		Usage: "Disables the mechanism to deny bad peers.",
-		Value: false,
-	}
-	NumberOfK = &cli.IntFlag{
-		Name:  "number-of-k",
-		Usage: "The number of clusters on virtual coordinate system.",
-		Value: 2,
-	}
-	// VCSIntervalフラグはVCS起動の間隔を表す
-	VCSInterval = &cli.IntFlag{
-		Name:  "vcs-interval",
-		Usage: "The interval of each VCS",
-		Value: 5,
-	}
-	// LowPassFilterは計測したRTTをローパスフィルタで制御するかを決定
-	UseLowPassFilter = &cli.BoolFlag{
-		Name:  "use-lowpass-filter",
-		Usage: "Enables lowpass filter to collected rtt data",
-	}
-	// VCS上のクラスター化に基づいたピア選択を行うかを決定
-	UseClusterBasedPeerSelection = &cli.BoolFlag{
-		Name:  "use-cluster-based-peer-selection",
-		Usage: "Enables the peer selectoin based on the cluster",
-	}
-	// クラスター間でピアの数が偏らないようにするかを決定
-	EnableClusterBiasControl = &cli.BoolFlag{
-		Name:  "enable-cluster-bias-control",
-		Usage: "Enables the control of the number of peers among clusters",
-	}
-	// VCS上のクラスター化に基づいたピア選択を行うかを決定
-	InnerCluster = &cli.IntFlag{
-		Name:  "inner-cluster",
-		Usage: "The number of peers in the same cluster",
-		Value: 5,
-	}
-	/////////////////////////////////////////////////
 )
 
 // LoadFlagsFromConfig sets flags values from config file if ConfigFileFlag is set.

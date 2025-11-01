@@ -113,15 +113,6 @@ var appFlags = []cli.Flag{
 	cmd.ForceClearDB,
 	cmd.LogFormat,
 	cmd.MaxGoroutines,
-	// For Virtual Coordinate System code /////////////
-	cmd.DisableBadPeer,
-	cmd.NumberOfK,
-	cmd.VCSInterval,
-	cmd.UseLowPassFilter,
-	cmd.UseClusterBasedPeerSelection,
-	cmd.InnerCluster,
-	cmd.EnableClusterBiasControl,
-	/////////////////////////////////////////////////
 	debug.PProfFlag,
 	debug.PProfAddrFlag,
 	debug.PProfPortFlag,

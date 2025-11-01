@@ -194,25 +194,6 @@ var appHelpFlagGroups = []flagGroup{
 			cmd.BackupWebhookOutputDir,
 		},
 	},
-	// For Virtual Coordinate System code /////////////
-	{
-		Name: "random",
-		Flags: []cli.Flag{
-			cmd.DisableBadPeer,
-		},
-	},
-	{
-		Name: "vcs",
-		Flags: []cli.Flag{
-			cmd.NumberOfK,
-			cmd.VCSInterval,
-			cmd.UseLowPassFilter,
-			cmd.UseClusterBasedPeerSelection,
-			cmd.InnerCluster,
-			cmd.EnableClusterBiasControl,
-		},
-	},
-	/////////////////////////////////////////////////
 }
 
 func init() {

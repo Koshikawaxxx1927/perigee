@@ -91,16 +91,7 @@ type StatusConfig struct {
 	PeerLimit int
 	// ScorerParams holds peer scorer configuration params.
 	ScorerParams *scorers.Config
-	// For Virtual Coordinate System code /////////////
-	DisableBadPeer bool
-	/////////////////////////////////////////////////
 }
-
-// For Virtual Coordinate System code /////////////
-var (
-	disableBadPeer bool
-)
-/////////////////////////////////////////////////
 
 // NewStatus creates a new status entity.
 func NewStatus(ctx context.Context, config *StatusConfig) *Status {

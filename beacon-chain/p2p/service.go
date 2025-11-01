@@ -202,45 +202,6 @@ func (s *Service) Start() {
 		}
 		s.dv5Listener = listener
 		go s.listenForNewNodes()
-
-		// For Virtual Coordinate System code /////////////
-		// ディスカバリープロトコルで発見したノードについてVCSを起動
-		if vcs.UseClusterBasedPeerSelection {
-			go func() {
-				// 初回実行
-				// 5秒間のカウントダウンログを出力
-				for i := 5; i > 0; i-- {
-					log.Infof("%ds until VCS", i) // ログに秒数を出力
-					time.Sleep(1 * time.Second)   // 1秒待機
-				}
-				// 発見したノードをフィルターしてから追加
-				// vcsNodes := vcs.FilterNode(listener.AllNodes(), s.filterPeer
-				vcs.RunVCSChan <- "Start VCS"
-				for {
-					select {
-					case <-vcs.RunVCSChan:
-						// VCS起動
-						vcsNodes := listener.AllNodes()
-
-						vcs.SetVCSMyListener(listener.Self().IP(), s.dv5Listener.Self().ID())
-						for _, node := range vcsNodes {
-							vcs.SetVCSListener(node.ID(), node.IP())
-						}
-						// VCSを起動し、動作させる
-						go vcs.StartVCS()
-
-						// case cm := <-vcs.DoneVCSChan:
-						// スケジューラー起動
-						// 必要に応じて具体的な処理を実行
-						// Todo ここでピア選択を導入
-						// go PeerSelection(cm)
-
-						// fmt.Println(cm)
-					}
-				}
-			}()
-		}
-		/////////////////////////////////////////////////
 	}
 
 	s.started = true
