@@ -98,7 +98,6 @@ func NewStatus(ctx context.Context, config *StatusConfig) *Status {
 	store := peerdata.NewStore(ctx, &peerdata.StoreConfig{
 		MaxPeers: maxLimitBuffer + config.PeerLimit,
 	})
-	disableBadPeer = config.DisableBadPeer
 	return &Status{
 		ctx:       ctx,
 		store:     store,
@@ -337,10 +336,6 @@ func (p *Status) IsBad(pid peer.ID) bool {
 // isBad is the lock-free version of IsBad.
 func (p *Status) isBad(pid peer.ID) bool {
 	// Do not disconnect from trusted peers.
-	if disableBadPeer {
-		log.Info("Disable bad peer limitations")
-		return false
-	}
 	if p.store.IsTrustedPeer(pid) {
 		return false
 	}

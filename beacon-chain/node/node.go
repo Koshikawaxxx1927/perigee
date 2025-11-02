@@ -322,10 +322,6 @@ func New(cliCtx *cli.Context, cancel context.CancelFunc, opts ...Option) (*Beaco
 	}
 	beacon.collector = c
 
-	// For Virtual Coordinate System code /////////////
-	vcs.RegisterVCS(cliCtx)
-	/////////////////////////////////////////////////
-
 	return beacon, nil
 }
 
@@ -611,9 +607,6 @@ func (b *BeaconNode) registerP2P(cliCtx *cli.Context) error {
 		StateNotifier:     b,
 		DB:                b.db,
 		ClockWaiter:       b.clockWaiter,
-		// For Virtual Coordinate System code /////////////
-		DisableBadPeer:    cliCtx.Bool(cmd.DisableBadPeer.Name),
-		/////////////////////////////////////////////////
 	})
 	if err != nil {
 		return err

@@ -63,7 +63,6 @@ func (s *GossipScorer) isBadPeer(pid peer.ID) bool {
 	if !ok {
 		return false
 	}
-	log.Infof("Gossip score for peer %s: %f", pid, peerData.GossipScore)
 	return peerData.GossipScore < gossipThreshold
 }
 

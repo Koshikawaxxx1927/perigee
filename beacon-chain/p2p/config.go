@@ -34,9 +34,6 @@ type Config struct {
 	StateNotifier       statefeed.Notifier
 	DB                  db.ReadOnlyDatabase
 	ClockWaiter         startup.ClockWaiter
-	// For Virtual Coordinate System code /////////////
-	DisableBadPeer bool
-	/////////////////////////////////////////////////
 }
 
 // validateConfig validates whether the values provided are accurate and will set

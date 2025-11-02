@@ -31,7 +31,6 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1/metadata"
 	"github.com/prysmaticlabs/prysm/v4/runtime"
 	"github.com/prysmaticlabs/prysm/v4/time/slots"
-	"github.com/prysmaticlabs/prysm/v4/vcs"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
 )
@@ -154,7 +153,6 @@ func NewService(ctx context.Context, cfg *Config) (*Service, error) {
 				DecayInterval: time.Hour,
 			},
 		},
-		DisableBadPeer: s.cfg.DisableBadPeer,
 	})
 
 	// Initialize Data maps.
