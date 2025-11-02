@@ -1,9 +1,7 @@
 package scorer
 
 import (
-	"errors"
 	"math"
-	"math/rand"
 	"sort"
 
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -27,15 +25,7 @@ func NewSelector() *Selector {
 func (sel *Selector) SelectWithLCBReplacement(
 	bounds map[peer.ID]lcbucb,
 	current []peer.ID,
-	dout int,
-	candidatePool []peer.ID,
-) ([]peer.ID, error) {
-	if dout <= 0 {
-		return nil, errors.New("dout must be > 0")
-	}
-
-	selected := make([]peer.ID, 0, dout)
-
+) (peer.ID, error) {
 	// --- 1. Top-K選択 (current内でLCBが小さい順) ---
 	type kv struct {
 		id  peer.ID
@@ -49,13 +39,14 @@ func (sel *Selector) SelectWithLCBReplacement(
 	}
 	sort.Slice(currBounds, func(i, j int) bool { return currBounds[i].lcb < currBounds[j].lcb })
 
-	for i := 0; i < len(currBounds) && len(selected) < dout; i++ {
+	selected := make([]peer.ID, 0)
+	for i := 0; i < len(currBounds); i++ {
 		selected = append(selected, currBounds[i].id)
 	}
 
 	// --- 2. LCB/UCB置換 ---
-	if len(selected) > 0 && len(candidatePool) > 0 {
-		// selected内の worstPeer を探す
+	var replaced peer.ID
+	// if len(selected) > 0 && len(candidatePool) > 0 {
 		var worstPeer peer.ID
 		maxLCB := -math.Inf(1)
 		minUCB := math.Inf(1)
@@ -70,35 +61,13 @@ func (sel *Selector) SelectWithLCBReplacement(
 			}
 		}
 
-		// maxLCB > minUCB の場合のみ置換
 		if maxLCB > minUCB {
-			randIndex := rand.Intn(len(candidatePool))
-			replacement := candidatePool[randIndex]
-			for i, pid := range selected {
-				if pid == worstPeer {
-					selected[i] = replacement
-					break
-				}
-			}
+			replaced = worstPeer
 		}
-	}
+	// }
 
-	// --- 3. dout に満たない場合は候補から追加 ---
-	for _, pid := range candidatePool {
-		if len(selected) >= dout {
-			break
-		}
-		already := false
-		for _, s := range selected {
-			if s == pid {
-				already = true
-				break
-			}
-		}
-		if !already {
-			selected = append(selected, pid)
-		}
-	}
+	// --- 3. dout に満たない場合の補充は無視 ---
+	// 置換されたノードだけを返すため、追加処理は行わない
 
-	return selected, nil
+	return replaced, nil
 }

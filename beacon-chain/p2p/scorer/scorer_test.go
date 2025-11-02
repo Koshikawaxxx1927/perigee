@@ -89,7 +89,7 @@ func TestComputeRelativeSamplesFromSnapshot(t *testing.T) {
 // --------------------------
 func TestComputeLCBAndUCB_Basic(t *testing.T) {
 	rand.Seed(12345)
-	ucb := NewUCBScorer(90.0, 125, 5)
+	ucb := NewUCBScorer(90.0, 0.125, 5)
 
 	base := time.Unix(0, 0)
 	round1 := map[string]map[peer.ID]time.Time{
@@ -113,212 +113,107 @@ func TestComputeLCBAndUCB_Basic(t *testing.T) {
 	}
 }
 
-// --------------------------
-// 単体テスト: Selector with LCB置換
-// --------------------------
-func TestSelectorWithLCBReplacement_AllCases(t *testing.T) {
-	rand.Seed(42)
+// // --------------------------
+// // 単体テスト: Selector with LCB置換
+// // --------------------------
+func TestSelectWithLCBReplacement_SingleReplacement(t *testing.T) {
 	sel := NewSelector()
 
-	t.Run("replacement_needed", func(t *testing.T) {
-		bounds := map[peer.ID]lcbucb{
-			peer.ID("p_worst"): {LCB: 5.0, UCB: 7.0},
-			peer.ID("p_good"):  {LCB: 1.0, UCB: 2.0},
-			peer.ID("p_mid"):   {LCB: 2.0, UCB: 3.0},
-		}
-		current := []peer.ID{peer.ID("p_worst"), peer.ID("p_good")}
-		candidates := []peer.ID{peer.ID("p_new")}
+	tests := []struct {
+		name        string
+		bounds      map[peer.ID]lcbucb
+		current     []peer.ID
+		wantReplace peer.ID
+	}{
+		{
+			name: "replacement_needed",
+			bounds: map[peer.ID]lcbucb{
+				peer.ID("p_worst"): {LCB: 5.0, UCB: 7.0},
+				peer.ID("p_good"):  {LCB: 1.0, UCB: 2.0},
+				peer.ID("p_mid"):   {LCB: 2.0, UCB: 3.0},
+			},
+			current:     []peer.ID{peer.ID("p_worst"), peer.ID("p_good")},
+			wantReplace: peer.ID("p_worst"),
+		},
+		{
+			name: "no_replacement_needed",
+			bounds: map[peer.ID]lcbucb{
+				peer.ID("p1"): {LCB: 1.0, UCB: 5.0},
+				peer.ID("p2"): {LCB: 2.0, UCB: 6.0},
+			},
+			current:     []peer.ID{peer.ID("p1"), peer.ID("p2")},
+			wantReplace: "",
+		},
+		{
+			name:        "empty_current",
+			bounds:      map[peer.ID]lcbucb{},
+			current:     []peer.ID{},
+			wantReplace: "",
+		},
+		{
+			name: "all_same_bounds",
+			bounds: map[peer.ID]lcbucb{
+				peer.ID("p1"): {LCB: 2.0, UCB: 2.0},
+				peer.ID("p2"): {LCB: 2.0, UCB: 2.0},
+			},
+			current:     []peer.ID{peer.ID("p1"), peer.ID("p2")},
+			wantReplace: "",
+		},
+	}
 
-		selected, err := sel.SelectWithLCBReplacement(bounds, current, 2, candidates)
-		if err != nil {
-			t.Fatalf("SelectWithLCBReplacement failed: %v", err)
-		}
-
-		// p_worst は置換されているはず
-		for _, p := range selected {
-			if p == peer.ID("p_worst") {
-				t.Fatalf("expected p_worst to be replaced, still selected")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := sel.SelectWithLCBReplacement(tt.bounds, tt.current)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
 			}
-		}
-		foundNew := false
-		for _, p := range selected {
-			if p == peer.ID("p_new") {
-				foundNew = true
+			if got != tt.wantReplace {
+				t.Errorf("expected replaced peer %v, got %v", tt.wantReplace, got)
 			}
-		}
-		if !foundNew {
-			t.Fatalf("expected p_new to be selected, got %v", selected)
-		}
-	})
-
-	t.Run("no_replacement_needed", func(t *testing.T) {
-		bounds := map[peer.ID]lcbucb{
-			peer.ID("p1"): {LCB: 1.0, UCB: 5.0},
-			peer.ID("p2"): {LCB: 2.0, UCB: 6.0},
-		}
-		current := []peer.ID{peer.ID("p1"), peer.ID("p2")}
-		candidates := []peer.ID{peer.ID("p_new")}
-
-		selected, err := sel.SelectWithLCBReplacement(bounds, current, 2, candidates)
-		if err != nil {
-			t.Fatalf("SelectWithLCBReplacement failed: %v", err)
-		}
-
-		// 置換不要なので p1 と p2 が残るはず
-		found1, found2 := false, false
-		for _, p := range selected {
-			if p == peer.ID("p1") {
-				found1 = true
-			}
-			if p == peer.ID("p2") {
-				found2 = true
-			}
-		}
-		if !found1 || !found2 {
-			t.Fatalf("expected p1 and p2 to remain, got %v", selected)
-		}
-	})
-
-	t.Run("dout_smaller_than_total", func(t *testing.T) {
-		bounds := map[peer.ID]lcbucb{
-			peer.ID("p1"): {LCB: 1.0, UCB: 2.0},
-			peer.ID("p2"): {LCB: 2.0, UCB: 3.0},
-			peer.ID("p3"): {LCB: 3.0, UCB: 4.0},
-		}
-		current := []peer.ID{peer.ID("p1"), peer.ID("p2"), peer.ID("p3")}
-		candidates := []peer.ID{peer.ID("p_new")}
-
-		selected, err := sel.SelectWithLCBReplacement(bounds, current, 2, candidates)
-		if err != nil {
-			t.Fatalf("SelectWithLCBReplacement failed: %v", err)
-		}
-		if len(selected) != 2 {
-			t.Fatalf("expected selected length 2, got %d", len(selected))
-		}
-	})
-
-	t.Run("multiple_candidates", func(t *testing.T) {
-		bounds := map[peer.ID]lcbucb{
-			peer.ID("p1"): {LCB: 5.0, UCB: 6.0},
-			peer.ID("p2"): {LCB: 1.0, UCB: 2.0},
-		}
-		current := []peer.ID{peer.ID("p1"), peer.ID("p2")}
-		candidates := []peer.ID{peer.ID("p_new1"), peer.ID("p_new2")}
-
-		selected, err := sel.SelectWithLCBReplacement(bounds, current, 2, candidates)
-		if err != nil {
-			t.Fatalf("SelectWithLCBReplacement failed: %v", err)
-		}
-
-		// p1 は置換され、候補のどちらかが入る
-		found := false
-		for _, p := range selected {
-			if p == peer.ID("p_new1") || p == peer.ID("p_new2") {
-				found = true
-			}
-		}
-		if !found {
-			t.Fatalf("expected one candidate to be selected, got %v", selected)
-		}
-	})
-
-	t.Run("no_candidates", func(t *testing.T) {
-		bounds := map[peer.ID]lcbucb{
-			peer.ID("p1"): {LCB: 5.0, UCB: 6.0},
-			peer.ID("p2"): {LCB: 1.0, UCB: 2.0},
-		}
-		current := []peer.ID{peer.ID("p1"), peer.ID("p2")}
-		candidates := []peer.ID{}
-
-		selected, err := sel.SelectWithLCBReplacement(bounds, current, 2, candidates)
-		if err != nil {
-			t.Fatalf("SelectWithLCBReplacement failed: %v", err)
-		}
-
-		// 候補なしでも dout <= len(current) なので元のノードが残る
-		found1, found2 := false, false
-		for _, p := range selected {
-			if p == peer.ID("p1") {
-				found1 = true
-			}
-			if p == peer.ID("p2") {
-				found2 = true
-			}
-		}
-		if !found1 || !found2 {
-			t.Fatalf("expected p1 and p2 to remain, got %v", selected)
-		}
-	})
+		})
+	}
 }
 
-func TestEndToEndIntegration(t *testing.T) {
-	rand.Seed(7)
-
-	// --- 1. ObservationStoreにサンプルを記録 ---
-	store := NewObservationStore()
+// --------------------------
+// End-to-End テスト
+// --------------------------
+func TestEndToEnd_ObservationStore_UCB_Selector(t *testing.T) {
+	rand.Seed(42)
 	base := time.Unix(0, 0)
 
-	// 近隣ノードの受信タイムスタンプを模擬
+	// 1. ObservationStore にサンプル記録
+	store := NewObservationStore()
 	store.RecordReceipt("b1", peer.ID("p1"), base)
 	store.RecordReceipt("b1", peer.ID("p2"), base.Add(100*time.Millisecond))
 	store.RecordReceipt("b2", peer.ID("p1"), base.Add(200*time.Millisecond))
 	store.RecordReceipt("b2", peer.ID("p2"), base.Add(500*time.Millisecond))
 
-	// --- 2. スナップショットを取得してクリア ---
-	snap := store.SnapshotAndClear()
+	snapshot := store.SnapshotAndClear()
 
-	// --- 3. UCBScorerでLCB/UCBを計算 ---
-	ucb := NewUCBScorer(90.0, 125, 2)
-	ucb.AddRoundSamples(snap)
+	// 2. UCBScorer で LCB/UCB 計算
+	ucb := NewUCBScorer(90.0, 0.125, 5) // 秒単位
+	ucb.AddRoundSamples(snapshot)
+
 	bounds, err := ucb.ComputeLCBAndUCB()
 	if err != nil {
 		t.Fatalf("ComputeLCBAndUCB error: %v", err)
 	}
 
-	// p1の方が速い（LCB小さい）ことを確認
+	// p1 の方が速い（LCB が小さい）ことを確認
 	if bounds[peer.ID("p1")].LCB >= bounds[peer.ID("p2")].LCB {
-		t.Fatalf("expected p1 LCB < p2 LCB, got p1=%v p2=%v",
-			bounds[peer.ID("p1")].LCB, bounds[peer.ID("p2")].LCB)
+		t.Fatalf("expected LCB(p1) < LCB(p2), got p1=%v, p2=%v", bounds[peer.ID("p1")].LCB, bounds[peer.ID("p2")].LCB)
 	}
 
-	// --- 4. Selectorで選択 ---
+	// 3. Selector で置換が必要な peer を取得
 	sel := NewSelector()
-	currentOutgoing := []peer.ID{peer.ID("p1"), peer.ID("p2")}
-	candidatePool := []peer.ID{peer.ID("p3")}
-	dout := 2
-
-	selected, err := sel.SelectWithLCBReplacement(bounds, currentOutgoing, dout, candidatePool)
+	current := []peer.ID{peer.ID("p1"), peer.ID("p2")}
+	replaced, err := sel.SelectWithLCBReplacement(bounds, current)
 	if err != nil {
-		t.Fatalf("SelectWithLCBReplacement failed: %v", err)
+		t.Fatalf("Selector error: %v", err)
 	}
 
-	// --- 5. 選択結果の確認 ---
-	if len(selected) != dout {
-		t.Fatalf("expected %d peers selected, got %d", dout, len(selected))
-	}
-
-	// p1は必ず選ばれる（速い）
-	foundP1 := false
-	for _, pid := range selected {
-		if pid == peer.ID("p1") {
-			foundP1 = true
-			break
-		}
-	}
-	if !foundP1 {
-		t.Fatalf("expected p1 to be selected, got %v", selected)
-	}
-
-	// maxLCB > minUCB の場合、最も遅い p2 が p3 に置換されているか確認
-	maxLCB := -1.0
-	var worstPeer peer.ID
-	for _, pid := range selected {
-		if b, ok := bounds[pid]; ok && b.LCB > maxLCB {
-			maxLCB = b.LCB
-			worstPeer = pid
-		}
-	}
-	if worstPeer == peer.ID("p2") {
-		t.Fatalf("expected p2 to be replaced by candidate, got %v", selected)
+	// 4. 遅い p2 が置換対象になることを確認
+	if replaced != peer.ID("p2") {
+		t.Fatalf("expected p2 to be replaced, got %v", replaced)
 	}
 }
