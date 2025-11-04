@@ -4,6 +4,7 @@ package sync
 import (
 	"context"
 
+	"encoding/hex"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"google.golang.org/protobuf/proto"
 
@@ -27,6 +28,7 @@ func (s *Service) beaconBlockSubscriberWithPeer(ctx context.Context, msg proto.M
 	go func(root [32]byte, pid peer.ID) {
 		// ✅ ここでブロック観測を記録
 		if mgr := s.cfg.p2p.PeerSelectorManager(); mgr != nil {
+			log.Infof("Recording block observation for peer %s and block %s", pid.String(), hex.EncodeToString(root[:]))
     		go mgr.AddBlockNow(root, pid)
 		}
 	}(func() [32]byte {

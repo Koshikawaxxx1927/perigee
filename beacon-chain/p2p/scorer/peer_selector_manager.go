@@ -61,10 +61,12 @@ func (m *PeerSelectorManager) Run(getCurrentPeers func() []peer.ID, stopCh <-cha
 
 func (m *PeerSelectorManager) runOneRound(getCurrentPeers func() []peer.ID) {
 	// 1) snapshot samples and add to ucb
+	m.logger.Info("Starting peer selection round")
 	snap := m.obs.SnapshotAndClear()
 	m.ucb.AddRoundSamples(snap)
 
 	// 2) compute bounds
+	m.logger.Info("Computing UCB/LBC bounds for peer selection")
 	bounds, err := m.ucb.ComputeLCBAndUCB()
 	if err != nil {
 		m.logger.WithError(err).Warn("ComputeLCBAndUCB failed")
@@ -72,6 +74,7 @@ func (m *PeerSelectorManager) runOneRound(getCurrentPeers func() []peer.ID) {
 	}
 
 	// 3) build current peer set (filter out blocked)
+	m.logger.Info("Building current peer set for selection")
 	current := getCurrentPeers()
 	filtered := make([]peer.ID, 0, len(current))
 	now := time.Now()
@@ -114,6 +117,7 @@ func (m *PeerSelectorManager) runOneRound(getCurrentPeers func() []peer.ID) {
 			// If disconnect failed, avoid marking blocked; but continue
 			break
 		}
+		m.logger.WithField("peer", replaced).Info("Disconnected peer")
 		// record to blockList
 		m.addBlocked(replaced, now.Add(m.blockDuration))
 		m.logger.WithField("peer", replaced).Infof("Disconnected and blocked until %s", now.Add(m.blockDuration).Format(time.RFC3339))
