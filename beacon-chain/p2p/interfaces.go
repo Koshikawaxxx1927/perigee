@@ -15,6 +15,7 @@ import (
 	ethpb "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1/metadata"
 	"google.golang.org/protobuf/proto"
+	"github.com/prysmaticlabs/prysm/v4/beacon-chain/p2p/scorer"
 )
 
 // P2P represents the full p2p interface composed of all of the sub-interfaces.
@@ -28,6 +29,9 @@ type P2P interface {
 	ConnectionHandler
 	PeersProvider
 	MetadataProvider
+	// For Perigee project ////////////////////////////
+	PeerSelectorManager() *scorer.PeerSelectorManager
+	////////////////////////////////////////////////////
 }
 
 // Broadcaster broadcasts messages to peers over the p2p pubsub protocol.

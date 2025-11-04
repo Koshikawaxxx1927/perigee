@@ -33,6 +33,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/time/slots"
 	"github.com/sirupsen/logrus"
 	"go.opencensus.io/trace"
+	"github.com/prysmaticlabs/prysm/v4/beacon-chain/p2p/scorer"
 )
 
 var _ runtime.Service = (*Service)(nil)
@@ -77,6 +78,9 @@ type Service struct {
 	genesisTime           time.Time
 	genesisValidatorsRoot []byte
 	activeValidatorCount  uint64
+	// For Perigee project ////////////////////////////
+	manager *scorer.PeerSelectorManager
+	////////////////////////////////////////////////////
 }
 
 // NewService initializes a new p2p service compatible with shared.Service interface. No
@@ -502,4 +506,19 @@ func (s *Service) DisconnectAllOutboundPeers() {
 	}
 }
 
+////////////////////////////////////////////////////
+
+// For Perigee project ////////////////////////////
+func (s *Service) PerigeePeerSelection() {
+	manager := scorer.NewPeerSelectorManager(func(pid peer.ID) error {
+		return s.Disconnect(pid) // Prysm の Disconnect API を呼ぶ
+	}, log)
+	// 定期実行開始（別ゴルーチン）
+	stopCh := make(chan struct{})
+	go manager.Run(func() []peer.ID {
+		return s.Peers().OutboundConnected() // 現在接続中ピア一覧を返す
+	}, stopCh)
+}
+
+func (s *Service) PeerSelectorManager() *scorer.PeerSelectorManager { return s.manager }
 ////////////////////////////////////////////////////

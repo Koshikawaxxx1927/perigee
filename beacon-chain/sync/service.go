@@ -44,6 +44,9 @@ import (
 	prysmTime "github.com/prysmaticlabs/prysm/v4/time"
 	"github.com/prysmaticlabs/prysm/v4/time/slots"
 	"github.com/trailofbits/go-mutexasserts"
+	// For Perigee project ////////////////////////////
+	"github.com/prysmaticlabs/prysm/v4/beacon-chain/p2p/scorer"
+	// ////////////////////////////////////////////
 )
 
 var _ runtime.Service = (*Service)(nil)
@@ -155,6 +158,11 @@ type Service struct {
 	initialSyncComplete              chan struct{}
 	verifierWaiter                   *verification.InitializerWaiter
 	newBlobVerifier                  verification.NewBlobVerifier
+	// For Perigee project ////////////////////////////
+	pubsub *pubsub.PubSub        // if your code holds a PubSub instance here; otherwise adapt
+    subscriptions []*pubsub.Subscription
+    obsStore *scorer.ObservationStore // if you prefer DI over global
+	// ////////////////////////////////////////////
 }
 
 // NewService initializes new regular sync service.
@@ -170,6 +178,10 @@ func NewService(ctx context.Context, opts ...Option) *Service {
 		seenPendingBlocks:    make(map[[32]byte]bool),
 		blkRootToPendingAtts: make(map[[32]byte][]*ethpb.SignedAggregateAttestationAndProof),
 		signatureChan:        make(chan *signatureVerifier, verifierLimit),
+
+		// For Perigee project //////////////////////////
+		subscriptions: nil,
+		// ///////////////////////////////////////////
 	}
 	for _, opt := range opts {
 		if err := opt(r); err != nil {

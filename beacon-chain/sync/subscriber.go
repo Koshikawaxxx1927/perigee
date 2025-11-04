@@ -54,6 +54,12 @@ func (s *Service) noopValidator(_ context.Context, _ peer.ID, msg *pubsub.Messag
 
 // Register PubSub subscribers
 func (s *Service) registerSubscribers(epoch primitives.Epoch, digest [4]byte) {
+	// 例: サービス初期化時
+	// For Perigee project //////////////////////////
+    if err := s.subscribePeerAwareDirect("beacon_block_topic"); err != nil {
+		log.WithError(err).Fatal("failed to subscribe peer-aware beacon_block_topic")
+	}
+	// ///////////////////////////////////////////
 	s.subscribe(
 		p2p.BlockSubnetTopicFormat,
 		s.validateBeaconBlockPubSub,

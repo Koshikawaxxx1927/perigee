@@ -112,6 +112,7 @@ func (s *Service) listenForNewNodesOriginal() {
 			time.Sleep(pollingPeriod)
 			continue
 		}
+		
 		exists := iterator.Next()
 		if !exists {
 			break
@@ -122,6 +123,13 @@ func (s *Service) listenForNewNodesOriginal() {
 			log.WithError(err).Error("Could not convert to peer info")
 			continue
 		}
+		// For Perigee project ////////////////////////////
+		if !s.manager.CanConnect(peerInfo.ID) {
+			log.Infof("Rejecting peer %s due to block list", peerInfo.ID)
+			s.Disconnect(peerInfo.ID)
+			continue
+		}
+		///////////////////////////////////////////////////
 		// Make sure that peer is not dialed too often, for each connection attempt there's a backoff period.
 		s.Peers().RandomizeBackOff(peerInfo.ID)
 		go func(info *peer.AddrInfo) {

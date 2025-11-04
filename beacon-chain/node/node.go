@@ -67,7 +67,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/runtime/debug"
 	"github.com/prysmaticlabs/prysm/v4/runtime/prereqs"
 	"github.com/prysmaticlabs/prysm/v4/runtime/version"
-	"github.com/prysmaticlabs/prysm/v4/vcs"
+	// "github.com/prysmaticlabs/prysm/v4/perigee"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 )
