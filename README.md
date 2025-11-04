@@ -13,7 +13,7 @@ go version go1.22.2 linux/amd64 # 推奨バージョン
 ## ビルド方法
 
 ```
-cd vcs-prysm
+cd perigee
 CGO_CFLAGS="-O2 -D__BLST_PORTABLE__" go build -o=../beacon-chain ./cmd/beacon-chain
 CGO_CFLAGS="-O2 -D__BLST_PORTABLE__" go build -o=../validator ./cmd/validator
 CGO_CFLAGS="-O2 -D__BLST_PORTABLE__" go build -o=../prysmctl ./cmd/prysmctl
