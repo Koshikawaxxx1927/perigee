@@ -569,18 +569,21 @@ func (s *Service) perigeePeerSelection() {
 	}
 
 	// 最悪スコアのピアを選択
-	worstPeer, found := manager.SelectWorstPeer(filteredPeers)
+	replacedNumber := 2
+	worstPeers, found := manager.SelectWorstPeers(filteredPeers, replacedNumber)
 	if !found {
 		return
 	}
 
 	// ピアを切断
-	if err := s.Disconnect(worstPeer); err != nil {
-		log.Infof("failed to disconnect peer %s: %v", worstPeer, err)
-	} else {
-		log.Infof("disconnected worst peer %s", worstPeer)
-		// blockListに追加
-		s.blockList[worstPeer] = now
+	for _, worstPeer := range worstPeers {
+		if err := s.Disconnect(worstPeer); err != nil {
+			log.Infof("failed to disconnect peer %s: %v", worstPeer, err)
+		} else {
+			log.Infof("disconnected worst peer %s", worstPeer)
+			// blockListに追加
+			s.blockList[worstPeer] = now
+		}
 	}
 }
 

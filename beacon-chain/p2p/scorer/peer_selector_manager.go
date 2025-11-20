@@ -28,7 +28,7 @@ func (m *PeerSelectorManager) RecordBlockDelivery(p peer.ID, blk [field_params.R
 }
 
 // SelectWorstPeer は現在のスナップショットで最もスコアの高いピアを返す
-func (m *PeerSelectorManager) SelectWorstPeer(outboundPeers []peer.ID) (peer.ID, bool) {
+func (m *PeerSelectorManager) SelectWorstPeers(outboundPeers []peer.ID, replacedNumber int) ([]peer.ID, bool) {
 	// ObservationStore の SelectWorstPeer を呼び出す
-	return m.store.SelectWorstPeer(m.Delta, outboundPeers)
+	return m.store.SelectWorstPeers(m.Delta, outboundPeers, replacedNumber)
 }
